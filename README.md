@@ -27,8 +27,8 @@ A full-stack web app to track life admin tasks — renewals, deadlines, recurrin
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/xbazinga002/Personal-Logistics-and-Life-Administration-Tracker-
-cd Personal-Logistics-and-Life-Administration-Tracker-
+git clone https://github.com/xbazinga002/Personal-Logistics-and-Life-Administration-Tracker
+cd Personal-Logistics-and-Life-Administration-Tracker
 ```
 
 ### 2. Set up the database
