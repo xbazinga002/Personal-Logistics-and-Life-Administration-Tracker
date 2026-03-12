@@ -1,4 +1,4 @@
-# 🗂️ Personal Logistics & Life Administration Tracker
+# Personal Logistics & Life Administration Tracker
 
 > **Team: AdminOPs** — James Rhodes, Shane Stroud
 
@@ -6,19 +6,19 @@ A full-stack web application to track life admin tasks — renewals, deadlines, 
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Layer      | Tech                          |
-|------------|-------------------------------|
-| Frontend   | React + TypeScript (Vite)     |
-| Backend    | Node.js + Express + TypeScript|
-| Database   | PostgreSQL                    |
-| Migrations | Knex                          |
-| Auth       | JWT + bcrypt                  |
+| Layer      | Tech                           |
+|------------|--------------------------------|
+| Frontend   | React + TypeScript (Vite)      |
+| Backend    | Node.js + Express + TypeScript |
+| Database   | PostgreSQL                     |
+| Migrations | Knex                           |
+| Auth       | JWT + bcrypt                   |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -39,7 +39,6 @@ cd Personal-Logistics-and-Life-Administration-Tracker
 ### 2. Set Up the Database
 
 ```bash
-# Create the database in psql
 psql -U postgres -c "CREATE DATABASE logistics_tracker;"
 ```
 
@@ -77,21 +76,21 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |---|---|
-| 🔐 **Auth** | Register / login with JWT sessions |
-| 📋 **Items CRUD** | Create, view, edit, and delete life-admin tasks |
-| 📊 **Dashboard** | Items grouped into Overdue / Due Soon (7 days) / Upcoming (30 days) |
-| 🔁 **Recurrence** | Weekly, monthly, yearly — next occurrence auto-created on completion |
-| 🔔 **Notifications** | In-app bell for items due in 1 / 3 / 7 days and overdue items |
-| 🔍 **Filtering & Sorting** | Filter by status, category, tag, or date range; sort by due date |
-| 🏷️ **Categories & Tags** | Organize items with many-to-many tag support |
+| **Auth** | Register / login with JWT sessions |
+| **Items CRUD** | Create, view, edit, and delete life-admin tasks |
+| **Dashboard** | Items grouped into Overdue / Due Soon (7 days) / Upcoming (30 days) |
+| **Recurrence** | Weekly, monthly, yearly — next occurrence auto-created on completion |
+| **Notifications** | In-app bell for items due in 1 / 3 / 7 days and overdue items |
+| **Filtering & Sorting** | Filter by status, category, tag, or date range; sort by due date |
+| **Categories & Tags** | Organize items with many-to-many tag support |
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Auth
 ```
@@ -137,7 +136,7 @@ PUT    /api/notifications/read-all
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Personal-Logistics-and-Life-Administration-Tracker/
@@ -146,7 +145,7 @@ Personal-Logistics-and-Life-Administration-Tracker/
 │   └── src/
 │       ├── pages/               # Login, Register, Dashboard, Items, ItemDetail
 │       ├── components/          # Layout, ItemCard, ItemForm, NotificationBell, DashboardSection
-│       ├── services/            # API client (Axios / fetch wrappers)
+│       ├── services/            # API client
 │       └── types/               # Shared TypeScript interfaces & types
 │
 └── server/                      # Node.js + Express backend
@@ -157,12 +156,12 @@ Personal-Logistics-and-Life-Administration-Tracker/
         ├── middleware/          # JWT auth, input validation
         └── db/
             ├── migrations/      # Knex migration files
-            └── repositories/    # Data access layer (query builders)
+            └── repositories/    # Data access layer
 ```
 
 ---
 
-## 🧑‍💻 Development Notes
+## Development Notes
 
 - All timestamps are stored in UTC and converted client-side.
 - Recurrence logic lives in `server/src/services/` — completing a recurring item automatically creates the next occurrence.
@@ -170,11 +169,5 @@ Personal-Logistics-and-Life-Administration-Tracker/
 - The dashboard summary endpoint (`GET /api/dashboard/summary`) returns pre-bucketed counts for the frontend widgets.
 
 ---
-
-
-
----
-
-
 
 MIT © AdminOPs — James Rhodes & Shane Stroud
