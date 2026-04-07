@@ -60,7 +60,10 @@ The frontend communicates exclusively with the backend through a versioned REST 
 
 ## 2. Front-End Development
 
-The frontend is built with React 18, TypeScript, and Vite. Routing is handled by React Router. API communication uses a centralized service module so all fetch logic is in one place and easily updated.
+The frontend is built with React 18, TypeScript, and Vite. Routing is handled by React Router. API communication uses a centralized service mo<img width="2559" height="1522" alt="Screenshot 2026-04-06 212815" src="https://github.com/user-attachments/assets/e56e7463-262d-41d8-bc04-37730068a7a3" />
+<img width="2556" height="1518" alt="Screenshot 2026-04-06 212810" src="https://github.com/user-attachments/assets/d28b51b3-b719-4784-88a0-acb7f1bfe6b1" />
+<img width="2558" height="1521" alt="Screenshot 2026-04-06 212806" src="https://github.com/user-attachments/assets/f039afd8-6047-4eaa-9f48-1452f1a3ccba" />
+dule so all fetch logic is in one place and easily updated.
 
 **Pages implemented:**
 
@@ -152,7 +155,11 @@ The application meets all stated goals for Milestone 2. Users can register, log 
 **Known limitations at this milestone:**
 
 - Pagination is not yet implemented on `GET /api/items` — all matching items are returned in a single response
-- The notification service regenerates on every GET request rather than running on a scheduled interval; this will be refactored in Sprint 3
+- The notification service rege
+
+https://github.com/user-attachments/assets/72b31591-9e8e-4e5d-9b5b-39ff888686a1
+
+nerates on every GET request rather than running on a scheduled interval; this will be refactored in Sprint 3
 - Mobile layout has minor alignment issues on viewports narrower than 375px
 
 ---
