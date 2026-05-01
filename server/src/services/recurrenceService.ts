@@ -3,7 +3,7 @@
  * Handles weekly, monthly, and yearly recurrence with edge-case clamping.
  */
 
-export type RecurrenceType = 'none' | 'weekly' | 'monthly' | 'yearly';
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 /**
  * Given a due date and recurrence type, returns the next due date.
@@ -17,6 +17,10 @@ export function generateNextDueDate(dueDateInput: string | Date, recurrenceType:
   const date = new Date(dueDateStr + 'T00:00:00Z');
 
   switch (recurrenceType) {
+    case 'daily':
+      date.setUTCDate(date.getUTCDate() + 1);
+      break;
+
     case 'weekly':
       date.setUTCDate(date.getUTCDate() + 7);
       break;

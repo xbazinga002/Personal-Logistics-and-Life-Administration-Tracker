@@ -5,16 +5,31 @@ import { z } from 'zod';
 import type { Item, Category, Tag } from '../types';
 import { categories as catApi, tags as tagApi } from '../services/api';
 
+const DRAFT_KEY = 'lifeadmin:newItemDraft';
+
 const schema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   due_date: z.string().min(1, 'Due date is required').regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD format'),
   notes: z.string().max(2000).optional(),
   category_id: z.string().optional(),
-  recurrence_type: z.enum(['none', 'weekly', 'monthly', 'yearly']).default('none'),
+  recurrence_type: z.enum(['none', 'daily', 'weekly', 'monthly', 'yearly']).default('none'),
   status: z.enum(['pending', 'completed', 'overdue', 'archived']).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
+
+interface PersistedDraft extends Partial<FormData> {
+  tag_ids?: string[];
+}
+
+function loadDraft(): PersistedDraft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as PersistedDraft) : null;
+  } catch {
+    return null;
+  }
+}
 
 interface Props {
   defaultValues?: Partial<Item>;
@@ -47,18 +62,23 @@ function onBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTM
 }
 
 export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save', loading }: Props) {
+  const isNewItem = !defaultValues;
+  const draft = isNewItem ? loadDraft() : null;
+
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(defaultValues?.tags?.map((t) => t.id) || []);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    defaultValues?.tags?.map((t) => t.id) || draft?.tag_ids || []
+  );
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: defaultValues?.title || '',
-      due_date: defaultValues?.due_date || '',
-      notes: defaultValues?.notes || '',
-      category_id: defaultValues?.category_id || '',
-      recurrence_type: defaultValues?.recurrence_type || 'none',
+      title: defaultValues?.title || draft?.title || '',
+      due_date: defaultValues?.due_date || draft?.due_date || '',
+      notes: defaultValues?.notes || draft?.notes || '',
+      category_id: defaultValues?.category_id || draft?.category_id || '',
+      recurrence_type: defaultValues?.recurrence_type || draft?.recurrence_type || 'none',
       status: defaultValues?.status,
     },
   });
@@ -68,12 +88,39 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
     tagApi.list().then(setAllTags).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!isNewItem) return;
+    const subscription = watch((value) => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...value, tag_ids: selectedTagIds }));
+      } catch { /* quota exceeded; ignore */ }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, isNewItem, selectedTagIds]);
+
+  useEffect(() => {
+    if (!isNewItem) return;
+    try {
+      const existing = loadDraft() || {};
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...existing, tag_ids: selectedTagIds }));
+    } catch { /* ignore */ }
+  }, [selectedTagIds, isNewItem]);
+
   function toggleTag(id: string) {
     setSelectedTagIds((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   }
 
+  async function wrappedSubmit(data: FormData) {
+    try {
+      await onSubmit({ ...data, tag_ids: selectedTagIds });
+      if (isNewItem) localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // Parent surfaces the error message; keep the draft so the user can retry.
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit((data) => onSubmit({ ...data, tag_ids: selectedTagIds }))} noValidate>
+    <form onSubmit={handleSubmit(wrappedSubmit)} noValidate>
       <div style={field}>
         <label style={lbl}>Title *</label>
         <input {...register('title')} style={inp} placeholder="e.g. Renew car registration" onFocus={onFocus} onBlur={onBlur} />
@@ -103,6 +150,7 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
           <label style={lbl}>Recurrence</label>
           <select {...register('recurrence_type')} style={inp} onFocus={onFocus} onBlur={onBlur}>
             <option value="none" style={{ background: '#120022' }}>None</option>
+            <option value="daily" style={{ background: '#120022' }}>Daily</option>
             <option value="weekly" style={{ background: '#120022' }}>Weekly</option>
             <option value="monthly" style={{ background: '#120022' }}>Monthly</option>
             <option value="yearly" style={{ background: '#120022' }}>Yearly</option>

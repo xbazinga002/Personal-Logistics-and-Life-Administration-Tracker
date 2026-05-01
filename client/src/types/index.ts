@@ -1,4 +1,4 @@
-export type RecurrenceType = 'none' | 'weekly' | 'monthly' | 'yearly';
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type ItemStatus = 'pending' | 'completed' | 'overdue' | 'archived';
 export type UrgencyTier = 'overdue' | 'due_soon' | 'upcoming' | 'none';
 

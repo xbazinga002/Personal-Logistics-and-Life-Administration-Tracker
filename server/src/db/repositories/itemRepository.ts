@@ -9,7 +9,7 @@ export interface Item {
   notes: string | null;
   due_date: string;
   status: 'pending' | 'completed' | 'overdue' | 'archived';
-  recurrence_type: 'none' | 'weekly' | 'monthly' | 'yearly';
+  recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   recurrence_interval: number;
   archived_at: Date | null;
   created_at: Date;
@@ -85,7 +85,7 @@ export async function createItem(
     notes?: string;
     due_date: string;
     category_id?: string;
-    recurrence_type?: 'none' | 'weekly' | 'monthly' | 'yearly';
+    recurrence_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
     recurrence_interval?: number;
     generated_from_item_id?: string;
     tag_ids?: string[];
@@ -112,7 +112,7 @@ export async function updateItem(
     notes: string;
     due_date: string;
     category_id: string | null;
-    recurrence_type: 'none' | 'weekly' | 'monthly' | 'yearly';
+    recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
     recurrence_interval: number;
     status: 'pending' | 'completed' | 'overdue' | 'archived';
     archived_at: Date | null;

@@ -35,6 +35,7 @@ export default function ItemDetailPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
+      throw err;
     } finally { setSaving(false); }
   }
 

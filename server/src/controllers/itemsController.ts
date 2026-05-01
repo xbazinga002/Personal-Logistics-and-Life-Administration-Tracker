@@ -48,7 +48,7 @@ export async function createItem(req: AuthRequest, res: Response, next: NextFunc
     if (!title || typeof title !== 'string' || !title.trim()) throw new ValidationError('Title is required');
     if (!due_date || !isValidDate(due_date)) throw new ValidationError('A valid due_date (YYYY-MM-DD) is required');
 
-    const validRecurrence = ['none', 'weekly', 'monthly', 'yearly'];
+    const validRecurrence = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
     if (recurrence_type && !validRecurrence.includes(recurrence_type)) {
       throw new ValidationError(`recurrence_type must be one of: ${validRecurrence.join(', ')}`);
     }
