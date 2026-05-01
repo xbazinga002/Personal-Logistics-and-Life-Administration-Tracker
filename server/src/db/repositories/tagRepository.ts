@@ -11,6 +11,12 @@ export async function findAllByUser(userId: string): Promise<Tag[]> {
   return db('tags').where({ user_id: userId }).orderBy('name', 'asc');
 }
 
+export async function countOwnedByUser(ids: string[], userId: string): Promise<number> {
+  if (ids.length === 0) return 0;
+  const [{ count }] = await db('tags').whereIn('id', ids).andWhere({ user_id: userId }).count('id as count');
+  return parseInt(String(count), 10);
+}
+
 export async function create(userId: string, name: string): Promise<Tag> {
   const [tag] = await db('tags').insert({ user_id: userId, name }).returning('*');
   return tag;

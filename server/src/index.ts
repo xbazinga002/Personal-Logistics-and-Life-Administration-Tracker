@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -17,13 +19,25 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+app.set('trust proxy', 1);
+app.use(helmet({ contentSecurityPolicy: false }));
+
 if (!isProduction) {
   app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 }
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
-app.use('/api/auth', authRoutes);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many auth attempts, please try again later' },
+});
+
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/items', itemRoutes);
+
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/tags', tagRoutes);

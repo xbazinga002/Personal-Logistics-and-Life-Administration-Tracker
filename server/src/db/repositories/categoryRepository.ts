@@ -11,6 +11,11 @@ export async function findAllByUser(userId: string): Promise<Category[]> {
   return db('categories').where({ user_id: userId }).orderBy('name', 'asc');
 }
 
+export async function existsForUser(id: string, userId: string): Promise<boolean> {
+  const row = await db('categories').where({ id, user_id: userId }).first('id');
+  return !!row;
+}
+
 export async function create(userId: string, name: string): Promise<Category> {
   const [category] = await db('categories').insert({ user_id: userId, name }).returning('*');
   return category;

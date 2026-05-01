@@ -1,6 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import * as itemRepo from '../db/repositories/itemRepository';
+import * as categoryRepo from '../db/repositories/categoryRepository';
+import * as tagRepo from '../db/repositories/tagRepository';
 import { generateNextDueDate, toDateString } from '../services/recurrenceService';
 import { computeUrgency } from '../services/urgencyService';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
@@ -8,6 +10,18 @@ import { isValidDate, sanitizeString } from '../middleware/validate';
 
 function addUrgency(item: itemRepo.Item) {
   return { ...item, urgency: computeUrgency(item.due_date, item.status) };
+}
+
+async function assertCategoryOwned(categoryId: string | undefined | null, userId: string): Promise<void> {
+  if (!categoryId) return;
+  const owned = await categoryRepo.existsForUser(categoryId, userId);
+  if (!owned) throw new ValidationError('Invalid category_id');
+}
+
+async function assertTagsOwned(tagIds: string[] | undefined, userId: string): Promise<void> {
+  if (!tagIds || tagIds.length === 0) return;
+  const owned = await tagRepo.countOwnedByUser(tagIds, userId);
+  if (owned !== tagIds.length) throw new ValidationError('Invalid tag_ids');
 }
 
 export async function listItems(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -39,6 +53,10 @@ export async function createItem(req: AuthRequest, res: Response, next: NextFunc
       throw new ValidationError(`recurrence_type must be one of: ${validRecurrence.join(', ')}`);
     }
 
+    const safeTagIds = Array.isArray(tag_ids) ? tag_ids : [];
+    await assertCategoryOwned(category_id, req.userId!);
+    await assertTagsOwned(safeTagIds, req.userId!);
+
     const item = await itemRepo.createItem(req.userId!, {
       title: sanitizeString(title),
       notes: notes ? sanitizeString(notes) : undefined,
@@ -46,7 +64,7 @@ export async function createItem(req: AuthRequest, res: Response, next: NextFunc
       category_id: category_id || undefined,
       recurrence_type: recurrence_type || 'none',
       recurrence_interval: recurrence_interval ? parseInt(recurrence_interval) : 1,
-      tag_ids: Array.isArray(tag_ids) ? tag_ids : [],
+      tag_ids: safeTagIds,
     });
     res.status(201).json(addUrgency(item));
   } catch (err) { next(err); }
@@ -68,14 +86,20 @@ export async function updateItem(req: AuthRequest, res: Response, next: NextFunc
     if (title !== undefined) updateData.title = sanitizeString(title);
     if (notes !== undefined) updateData.notes = sanitizeString(notes);
     if (due_date !== undefined) updateData.due_date = due_date;
-    if (category_id !== undefined) updateData.category_id = category_id || null;
+    if (category_id !== undefined) {
+      await assertCategoryOwned(category_id, req.userId!);
+      updateData.category_id = category_id || null;
+    }
     if (recurrence_type !== undefined) updateData.recurrence_type = recurrence_type;
     if (recurrence_interval !== undefined) updateData.recurrence_interval = parseInt(recurrence_interval);
     if (status !== undefined) {
       updateData.status = status;
       if (status === 'archived') updateData.archived_at = new Date();
     }
-    if (Array.isArray(tag_ids)) updateData.tag_ids = tag_ids;
+    if (Array.isArray(tag_ids)) {
+      await assertTagsOwned(tag_ids, req.userId!);
+      updateData.tag_ids = tag_ids;
+    }
 
     const updated = await itemRepo.updateItem(req.params.id, req.userId!, updateData);
     res.json(addUrgency(updated!));
