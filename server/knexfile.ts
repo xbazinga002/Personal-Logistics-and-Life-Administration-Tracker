@@ -28,6 +28,7 @@ const config: { [key: string]: Knex.Config } = {
     migrations: {
       directory: './dist/db/migrations',
       loadExtensions: ['.js'],
+      disableMigrationsListValidation: true,
     },
     pool: { min: 2, max: 10 },
   },
