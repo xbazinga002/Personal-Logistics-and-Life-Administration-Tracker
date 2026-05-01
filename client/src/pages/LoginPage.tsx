@@ -80,14 +80,9 @@ export default function LoginPage() {
             />
           </div>
           <div style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#9b72cf', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Password
-              </label>
-              <Link to="/forgot-password" style={{ fontSize: 11, color: '#b537f2', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.02em' }}>
-                Forgot?
-              </Link>
-            </div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#9b72cf', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Password
+            </label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={input} required placeholder="••••••••"
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)'; e.currentTarget.style.boxShadow = ''; }}
