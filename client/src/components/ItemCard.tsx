@@ -100,9 +100,9 @@ export default function ItemCard({ item, onComplete, onDelete }: Props) {
         </div>
       )}
 
-      {(onComplete || onDelete) && item.status !== 'completed' && (
+      {(onComplete || onDelete) && (
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          {onComplete && (
+          {onComplete && item.status !== 'completed' && (
             <button
               onClick={(e) => { e.stopPropagation(); onComplete(item.id); }}
               style={{
