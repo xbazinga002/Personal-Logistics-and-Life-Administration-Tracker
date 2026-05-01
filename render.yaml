@@ -11,7 +11,7 @@ services:
     plan: free
     region: oregon
     rootDir: server
-    buildCommand: cd ../client && npm install && npm run build && cd ../server && npm install && npm run build
+    buildCommand: cd ../client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/health
     envVars:
