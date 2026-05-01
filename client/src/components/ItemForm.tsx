@@ -52,6 +52,24 @@ const lbl: React.CSSProperties = {
 
 const field: React.CSSProperties = { marginBottom: 18 };
 
+const labelRow: React.CSSProperties = {
+  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6,
+};
+
+const addBtn: React.CSSProperties = {
+  background: 'none', border: 'none', color: '#b537f2', cursor: 'pointer',
+  fontSize: 11, fontWeight: 800, letterSpacing: '0.04em', padding: 0,
+};
+
+const inlineRow: React.CSSProperties = {
+  display: 'flex', gap: 6, marginTop: 6,
+};
+
+const inlineBtn: React.CSSProperties = {
+  padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 700,
+  cursor: 'pointer', border: 'none', whiteSpace: 'nowrap',
+};
+
 function onFocus(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
   e.currentTarget.style.borderColor = 'rgba(181,55,242,0.65)';
   e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.1)';
@@ -71,7 +89,7 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
     defaultValues?.tags?.map((t) => t.id) || draft?.tag_ids || []
   );
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title || draft?.title || '',
@@ -110,6 +128,46 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
     setSelectedTagIds((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   }
 
+  const [newCatName, setNewCatName] = useState('');
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [creatingCat, setCreatingCat] = useState(false);
+  const [catError, setCatError] = useState('');
+
+  const [newTagName, setNewTagName] = useState('');
+  const [showNewTag, setShowNewTag] = useState(false);
+  const [creatingTag, setCreatingTag] = useState(false);
+  const [tagError, setTagError] = useState('');
+
+  async function handleCreateCategory() {
+    const name = newCatName.trim();
+    if (!name) return;
+    setCreatingCat(true); setCatError('');
+    try {
+      const created = await catApi.create(name);
+      setAllCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setValue('category_id', created.id, { shouldDirty: true });
+      setNewCatName('');
+      setShowNewCat(false);
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : 'Failed to create');
+    } finally { setCreatingCat(false); }
+  }
+
+  async function handleCreateTag() {
+    const name = newTagName.trim();
+    if (!name) return;
+    setCreatingTag(true); setTagError('');
+    try {
+      const created = await tagApi.create(name);
+      setAllTags((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedTagIds((prev) => [...prev, created.id]);
+      setNewTagName('');
+      setShowNewTag(false);
+    } catch (err) {
+      setTagError(err instanceof Error ? err.message : 'Failed to create');
+    } finally { setCreatingTag(false); }
+  }
+
   async function wrappedSubmit(data: FormData) {
     try {
       await onSubmit({ ...data, tag_ids: selectedTagIds });
@@ -140,11 +198,37 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
         <div>
-          <label style={lbl}>Category</label>
+          <div style={labelRow}>
+            <label style={lbl}>Category</label>
+            <button type="button" onClick={() => { setShowNewCat((v) => !v); setCatError(''); }} style={addBtn}>
+              {showNewCat ? '× Cancel' : '+ New'}
+            </button>
+          </div>
           <select {...register('category_id')} style={inp} onFocus={onFocus} onBlur={onBlur}>
             <option value="" style={{ background: '#120022' }}>— None —</option>
             {allCategories.map((c) => <option key={c.id} value={c.id} style={{ background: '#120022' }}>{c.name}</option>)}
           </select>
+          {showNewCat && (
+            <div style={inlineRow}>
+              <input
+                type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
+                placeholder="Category name" maxLength={64}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreateCategory(); } }}
+                style={{ ...inp, padding: '7px 10px', fontSize: 13 }} autoFocus onFocus={onFocus} onBlur={onBlur}
+              />
+              <button
+                type="button" disabled={creatingCat || !newCatName.trim()} onClick={handleCreateCategory}
+                style={{
+                  ...inlineBtn,
+                  background: creatingCat || !newCatName.trim() ? 'rgba(181,55,242,0.3)' : 'linear-gradient(135deg, #b537f2 0%, #f72585 100%)',
+                  color: '#fff',
+                }}
+              >
+                {creatingCat ? '…' : 'Add'}
+              </button>
+            </div>
+          )}
+          {catError && <div style={{ color: '#ff6eb0', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{catError}</div>}
         </div>
         <div>
           <label style={lbl}>Recurrence</label>
@@ -169,9 +253,14 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
         </div>
       )}
 
-      {allTags.length > 0 && (
-        <div style={field}>
+      <div style={field}>
+        <div style={labelRow}>
           <label style={lbl}>Tags</label>
+          <button type="button" onClick={() => { setShowNewTag((v) => !v); setTagError(''); }} style={addBtn}>
+            {showNewTag ? '× Cancel' : '+ New'}
+          </button>
+        </div>
+        {allTags.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
             {allTags.map((t) => {
               const active = selectedTagIds.includes(t.id);
@@ -192,14 +281,35 @@ export default function ItemForm({ defaultValues, onSubmit, submitLabel = 'Save'
               );
             })}
           </div>
-        </div>
-      )}
-
-      {allCategories.length === 0 && (
-        <p style={{ fontSize: 12, color: '#6b4a8a', marginBottom: 16, fontWeight: 600 }}>
-          No categories yet — <a href="/categories" style={{ color: '#b537f2', textDecoration: 'none', fontWeight: 800 }}>add some →</a>
-        </p>
-      )}
+        )}
+        {allTags.length === 0 && !showNewTag && (
+          <p style={{ fontSize: 12, color: '#6b4a8a', margin: '4px 0 0', fontWeight: 600 }}>
+            No tags yet — click + New to add one
+          </p>
+        )}
+        {showNewTag && (
+          <div style={inlineRow}>
+            <input
+              type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)}
+              placeholder="Tag name" maxLength={32}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreateTag(); } }}
+              style={{ ...inp, padding: '7px 10px', fontSize: 13 }} autoFocus onFocus={onFocus} onBlur={onBlur}
+            />
+            <button
+              type="button" disabled={creatingTag || !newTagName.trim()} onClick={handleCreateTag}
+              style={{
+                ...inlineBtn,
+                background: creatingTag || !newTagName.trim() ? 'rgba(0,240,255,0.2)' : 'rgba(0,240,255,0.18)',
+                color: creatingTag || !newTagName.trim() ? '#006878' : '#00f0ff',
+                border: '1px solid rgba(0,240,255,0.4)',
+              }}
+            >
+              {creatingTag ? '…' : 'Add'}
+            </button>
+          </div>
+        )}
+        {tagError && <div style={{ color: '#ff6eb0', fontSize: 12, marginTop: 4, fontWeight: 600 }}>{tagError}</div>}
+      </div>
 
       <button
         type="submit" disabled={loading}
