@@ -50,6 +50,9 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 }
 
 function signToken(userId: string): string {
-  const secret = process.env.JWT_SECRET || 'changeme';
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret === 'changeme' || secret.length < 32) {
+    throw new Error('JWT_SECRET must be set to a strong value (>= 32 chars)');
+  }
   return jwt.sign({ userId }, secret, { expiresIn: '7d' });
 }

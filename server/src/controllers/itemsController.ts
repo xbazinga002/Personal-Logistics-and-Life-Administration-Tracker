@@ -13,7 +13,8 @@ function addUrgency(item: itemRepo.Item) {
 export async function listItems(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const { status, category_id, tag_id, due_from, due_to, sort } = req.query as Record<string, string>;
-    const items = await itemRepo.findAllByUser(req.userId!, { status, category_id, tag_id, due_from, due_to, sort: sort as 'asc' | 'desc' });
+    const safeSort: 'asc' | 'desc' = sort === 'desc' ? 'desc' : 'asc';
+    const items = await itemRepo.findAllByUser(req.userId!, { status, category_id, tag_id, due_from, due_to, sort: safeSort });
     res.json(items.map(addUrgency));
   } catch (err) { next(err); }
 }

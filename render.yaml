@@ -1,0 +1,27 @@
+databases:
+  - name: logistics-tracker-db
+    plan: free
+    databaseName: logistics_tracker
+    user: logistics_tracker
+
+services:
+  - type: web
+    name: logistics-tracker
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: server
+    buildCommand: cd ../client && npm install && npm run build && cd ../server && npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: logistics-tracker-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true

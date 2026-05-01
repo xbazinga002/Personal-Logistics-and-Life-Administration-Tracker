@@ -13,7 +13,10 @@ export function requireAuth(req: AuthRequest, _res: Response, next: NextFunction
       throw new UnauthorizedError('No token provided');
     }
     const token = header.slice(7);
-    const secret = process.env.JWT_SECRET || 'changeme';
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret === 'changeme' || secret.length < 32) {
+      throw new Error('JWT_SECRET must be set to a strong value (>= 32 chars)');
+    }
     const payload = jwt.verify(token, secret) as { userId: string };
     req.userId = payload.userId;
     next();
