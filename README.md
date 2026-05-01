@@ -4,6 +4,10 @@
 
 A full-stack web application to track life admin tasks — renewals, deadlines, and recurring obligations — with a smart dashboard that surfaces overdue, due-soon, and upcoming items at a glance.
 
+**Live demo:** [https://logistics-tracker-43yi.onrender.com](https://logistics-tracker-43yi.onrender.com)
+
+> Heads-up: the live demo runs on Render's free tier, so the first request after a quiet period takes ~30 seconds to wake up. After that it's instant.
+
 ---
 
 ## Tech Stack
@@ -83,7 +87,9 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | **Auth** | Register / login with JWT sessions |
 | **Items CRUD** | Create, view, edit, and delete life-admin tasks |
 | **Dashboard** | Items grouped into Overdue / Due Soon (7 days) / Upcoming (30 days) |
-| **Recurrence** | Weekly, monthly, yearly — next occurrence auto-created on completion |
+| **Recurrence** | Daily, weekly, monthly, yearly — next occurrence auto-created on completion |
+| **Inline create** | Add new categories and tags directly from the new-item form |
+| **Draft persistence** | Form auto-saves as you type; resume right where you left off |
 | **Notifications** | In-app bell for items due in 1 / 3 / 7 days and overdue items |
 | **Filtering & Sorting** | Filter by status, category, tag, or date range; sort by due date |
 | **Categories & Tags** | Organize items with many-to-many tag support |
@@ -161,12 +167,42 @@ Personal-Logistics-and-Life-Administration-Tracker/
 
 ---
 
+## Security
+
+Security was treated as a first-class concern, not an afterthought.
+
+| Layer | Protection |
+|---|---|
+| Passwords | Hashed with bcrypt before storage — never stored or logged in plaintext |
+| Sessions | Signed JWTs with mandatory strong-secret enforcement at boot |
+| Brute force | Auth endpoints rate-limited per IP |
+| Headers | `helmet` middleware applies modern browser security defaults |
+| Transport | HTTPS end-to-end (browser ↔ server, server ↔ database) |
+| SQL injection | Eliminated by design — all queries go through a parameterized query builder |
+| Cross-account access | Every query is scoped to the authenticated user; ownership is verified before referencing categories or tags |
+| Input | Validated with Zod (client) and explicit checks (server); JSON body size capped |
+| Secrets | All credentials live in environment variables, never in source control |
+
+---
+
+## Deployment
+
+The app is deployed on **Render** as a single Node web service that serves both the API and the built React bundle, plus a managed PostgreSQL database.
+
+- One-click deploy via [render.yaml](render.yaml) blueprint
+- Auto-deploys on every push to `main`
+- Migrations run automatically before each boot
+- Database connection uses TLS
+
+---
+
 ## Development Notes
 
 - All timestamps are stored in UTC and converted client-side.
-- Recurrence logic lives in `server/src/services/` — completing a recurring item automatically creates the next occurrence.
+- Recurrence logic lives in `server/src/services/` — completing a recurring item automatically creates the next occurrence with edge-case clamping (e.g., Jan 31 + 1 month → Feb 28/29).
 - Notification urgency tiers: **overdue**, **due in 1 day**, **due in 3 days**, **due in 7 days**.
 - The dashboard summary endpoint (`GET /api/dashboard/summary`) returns pre-bucketed counts for the frontend widgets.
+- TypeScript is used end-to-end; both client and server are type-checked in CI before deploy.
 
 ---
 
