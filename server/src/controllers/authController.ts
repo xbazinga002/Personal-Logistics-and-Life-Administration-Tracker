@@ -1,10 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import * as userRepo from '../db/repositories/userRepository';
+import * as resetRepo from '../db/repositories/passwordResetRepository';
+import { sendPasswordResetEmail } from '../services/emailService';
 import { ValidationError, ConflictError, UnauthorizedError } from '../utils/errors';
 
 const BCRYPT_ROUNDS = 10;
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -44,6 +52,57 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
     const token = signToken(user.id);
     res.json({ token, userId: user.id, email: user.email });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') throw new ValidationError('Email is required');
+
+    const user = await userRepo.findByEmail(email.toLowerCase());
+    if (user) {
+      await resetRepo.invalidateAllForUser(user.id);
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = hashToken(rawToken);
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+      await resetRepo.create(user.id, tokenHash, expiresAt);
+
+      const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+      const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
+      try {
+        await sendPasswordResetEmail(user.email, resetUrl);
+      } catch (sendErr) {
+        console.error('[forgotPassword] failed to send email:', sendErr);
+      }
+    }
+
+    res.json({ message: 'If an account exists for that email, a reset link has been sent.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { token, password } = req.body;
+    if (!token || typeof token !== 'string') throw new ValidationError('Token is required');
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters');
+    }
+
+    const tokenHash = hashToken(token);
+    const record = await resetRepo.findValidByHash(tokenHash);
+    if (!record) throw new UnauthorizedError('Invalid or expired reset token');
+
+    const newHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    await resetRepo.updateUserPasswordHash(record.user_id, newHash);
+    await resetRepo.markUsed(record.id);
+    await resetRepo.invalidateAllForUser(record.user_id);
+
+    res.json({ message: 'Password updated successfully. You can now sign in.' });
   } catch (err) {
     next(err);
   }

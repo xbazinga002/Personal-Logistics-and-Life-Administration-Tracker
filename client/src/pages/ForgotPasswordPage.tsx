@@ -1,27 +1,24 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { auth } from '../services/api';
 import Logo from '../components/Logo';
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
     try {
-      const data = await auth.login(email, password);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('email', data.email);
-      navigate('/dashboard');
+      const data = await auth.forgotPassword(email);
+      setMessage(data.message);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Request failed');
     } finally {
       setLoading(false);
     }
@@ -45,19 +42,20 @@ export default function LoginPage() {
         boxShadow: '0 32px 80px rgba(120,0,200,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
             <Logo size={52} withText={false} />
           </div>
           <div style={{
-            fontSize: 28, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 6,
+            fontSize: 24, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 6,
             background: 'linear-gradient(135deg, #b537f2 0%, #f72585 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 12px rgba(181,55,242,0.4))',
           }}>
-            LifeAdmin
+            Forgot Password
           </div>
-          <p style={{ color: '#6b4a8a', fontSize: 13, margin: 0, fontWeight: 600 }}>Sign in to your account</p>
+          <p style={{ color: '#6b4a8a', fontSize: 13, margin: 0, fontWeight: 600 }}>
+            We'll email you a reset link
+          </p>
         </div>
 
         {error && (
@@ -69,26 +67,21 @@ export default function LoginPage() {
           </div>
         )}
 
+        {message && (
+          <div style={{
+            background: 'rgba(124,255,107,0.1)', border: '1px solid rgba(124,255,107,0.3)',
+            color: '#7cff6b', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13, fontWeight: 600,
+          }}>
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} noValidate>
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 24 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#9b72cf', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Email
             </label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={input} required placeholder="you@email.com"
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)'; e.currentTarget.style.boxShadow = ''; }}
-            />
-          </div>
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#9b72cf', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Password
-              </label>
-              <Link to="/forgot-password" style={{ fontSize: 11, color: '#b537f2', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.02em' }}>
-                Forgot?
-              </Link>
-            </div>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={input} required placeholder="••••••••"
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)'; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)'; e.currentTarget.style.boxShadow = ''; }}
             />
@@ -104,13 +97,13 @@ export default function LoginPage() {
             onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = '0.88'; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Sending…' : 'Send Reset Link'}
           </button>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#3d1f5e', fontWeight: 600 }}>
-          No account?{' '}
-          <Link to="/register" style={{ color: '#b537f2', fontWeight: 800, textDecoration: 'none' }}>Create one</Link>
+          Remembered it?{' '}
+          <Link to="/login" style={{ color: '#b537f2', fontWeight: 800, textDecoration: 'none' }}>Sign in</Link>
         </p>
       </div>
     </div>

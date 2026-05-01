@@ -1,27 +1,33 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { auth } from '../services/api';
 import Logo from '../components/Logo';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
+export default function ResetPasswordPage() {
+  const [params] = useSearchParams();
+  const token = useMemo(() => params.get('token') || '', [params]);
+  const navigate = useNavigate();
+
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setMessage('');
+    if (!token) { setError('Missing reset token in the URL'); return; }
+    if (password !== confirm) { setError('Passwords do not match'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     setLoading(true);
     try {
-      const data = await auth.login(email, password);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('email', data.email);
-      navigate('/dashboard');
+      const data = await auth.resetPassword(token, password);
+      setMessage(data.message);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Reset failed');
     } finally {
       setLoading(false);
     }
@@ -32,6 +38,17 @@ export default function LoginPage() {
     background: 'rgba(181,55,242,0.06)', border: '1px solid rgba(181,55,242,0.2)',
     borderRadius: 10, fontSize: 14, color: '#ede0ff', outline: 'none',
     transition: 'border-color 0.15s, box-shadow 0.15s',
+  };
+  const label: React.CSSProperties = {
+    display: 'block', fontSize: 11, fontWeight: 800, color: '#9b72cf', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase',
+  };
+  const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)';
+    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)';
+  };
+  const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)';
+    e.currentTarget.style.boxShadow = '';
   };
 
   return (
@@ -45,19 +62,18 @@ export default function LoginPage() {
         boxShadow: '0 32px 80px rgba(120,0,200,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
         backdropFilter: 'blur(20px)',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
             <Logo size={52} withText={false} />
           </div>
           <div style={{
-            fontSize: 28, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 6,
+            fontSize: 24, fontWeight: 900, letterSpacing: '-0.5px', marginBottom: 6,
             background: 'linear-gradient(135deg, #b537f2 0%, #f72585 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 12px rgba(181,55,242,0.4))',
           }}>
-            LifeAdmin
+            Reset Password
           </div>
-          <p style={{ color: '#6b4a8a', fontSize: 13, margin: 0, fontWeight: 600 }}>Sign in to your account</p>
+          <p style={{ color: '#6b4a8a', fontSize: 13, margin: 0, fontWeight: 600 }}>Choose a new password</p>
         </div>
 
         {error && (
@@ -69,29 +85,23 @@ export default function LoginPage() {
           </div>
         )}
 
+        {message && (
+          <div style={{
+            background: 'rgba(124,255,107,0.1)', border: '1px solid rgba(124,255,107,0.3)',
+            color: '#7cff6b', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13, fontWeight: 600,
+          }}>
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} noValidate>
           <div style={{ marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#9b72cf', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Email
-            </label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={input} required placeholder="you@email.com"
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)'; e.currentTarget.style.boxShadow = ''; }}
-            />
+            <label style={label}>New Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={input} required placeholder="Min 8 characters" onFocus={onFocus} onBlur={onBlur} />
           </div>
           <div style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
-              <label style={{ fontSize: 11, fontWeight: 800, color: '#9b72cf', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Password
-              </label>
-              <Link to="/forgot-password" style={{ fontSize: 11, color: '#b537f2', fontWeight: 700, textDecoration: 'none', letterSpacing: '0.02em' }}>
-                Forgot?
-              </Link>
-            </div>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={input} required placeholder="••••••••"
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.7)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(181,55,242,0.12)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(181,55,242,0.2)'; e.currentTarget.style.boxShadow = ''; }}
-            />
+            <label style={label}>Confirm Password</label>
+            <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} style={input} required placeholder="••••••••" onFocus={onFocus} onBlur={onBlur} />
           </div>
           <button type="submit" disabled={loading} style={{
             width: '100%', padding: '13px',
@@ -104,13 +114,12 @@ export default function LoginPage() {
             onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = '0.88'; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Updating…' : 'Update Password'}
           </button>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#3d1f5e', fontWeight: 600 }}>
-          No account?{' '}
-          <Link to="/register" style={{ color: '#b537f2', fontWeight: 800, textDecoration: 'none' }}>Create one</Link>
+          <Link to="/login" style={{ color: '#b537f2', fontWeight: 800, textDecoration: 'none' }}>Back to sign in</Link>
         </p>
       </div>
     </div>
