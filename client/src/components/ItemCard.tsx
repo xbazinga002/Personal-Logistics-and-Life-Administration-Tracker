@@ -26,9 +26,7 @@ export default function ItemCard({ item, onComplete, onDelete }: Props) {
   const urg = urgencyConfig[item.urgency] ?? urgencyConfig.none;
   const stat = statusConfig[item.status] ?? statusConfig.pending;
 
-  const dueDateStr = item.due_date instanceof Date
-    ? (item.due_date as unknown as Date).toISOString().split('T')[0]
-    : String(item.due_date).split('T')[0];
+  const dueDateStr = String(item.due_date).split('T')[0];
 
   return (
     <div
