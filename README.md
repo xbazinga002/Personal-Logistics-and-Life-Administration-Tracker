@@ -2,7 +2,7 @@
 
 > **Team: AdminOPs** — James Rhodes, Shane Stroud
 
-A full-stack web application to track life admin tasks — renewals, deadlines, and recurring obligations — with a smart dashboard that surfaces overdue, due-soon, and upcoming items at a glance.
+A full-stack web application to track life admin tasks,renewals, deadlines, and recurring obligations with a smart dashboard that surfaces overdue, due-soon, and upcoming items at a glance.
 
 **Live demo:** [https://logistics-tracker-43yi.onrender.com](https://logistics-tracker-43yi.onrender.com)
 
