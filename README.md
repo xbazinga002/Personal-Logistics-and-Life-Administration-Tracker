@@ -6,7 +6,7 @@ A full-stack web application to track life admin tasks — renewals, deadlines, 
 
 **Live demo:** [https://logistics-tracker-43yi.onrender.com](https://logistics-tracker-43yi.onrender.com)
 
-> Heads-up: the live demo runs on Render's free tier, so the first request after a quiet period takes ~30 seconds to wake up. After that it's instant.
+> 
 
 ---
 
